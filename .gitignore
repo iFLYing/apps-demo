@@ -1,0 +1,12 @@
+# 依赖与运行产物
+node_modules/
+npm-debug.log*
+
+# 本地数据库（Render 免费版为临时盘，启动会自动重新播种 9 个小样）
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# 系统文件
+.DS_Store

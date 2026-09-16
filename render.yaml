@@ -1,0 +1,21 @@
+# Render 部署配置 · AI 小样集市（独立服务，与 login-dsm 完全分离）
+# 部署方式：在 Render 控制台「New → Blueprint」上传本文件，或「New → Web Service」连接仓库后自动识别。
+# 说明：本服务使用自带 SQLite + 自研账号体系，不依赖 login-dsm。
+services:
+  - type: web
+    name: ai-demos-hub
+    runtime: node
+    plan: free                      # 免费版；如需数据库持久化可升级到 paid 并挂载持久盘
+    region: oregon
+    branch: main
+    buildCommand: "npm install"
+    startCommand: "node --experimental-sqlite server.mjs"
+    nodeVersion: "22"
+    healthCheckPath: "/api/health"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # PORT 由 Render 自动注入，无需手动设置
+      # 可选：用环境变量覆盖默认管理员密码（强烈建议生产环境设置）
+      - key: ADMIN_PASSWORD
+        sync: false                 # 在 Render 控制台手动填写，不纳入版本库

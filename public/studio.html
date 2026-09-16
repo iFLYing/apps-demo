@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>创作者后台 · AI 小样集市</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo"><span class="dot"></span>AI 小样集市</div>
+    <nav><a href="/">首页</a><a href="/dashboard.html">数据看板</a><a href="/review.html">审核台</a></nav>
+    <div class="search"><input placeholder="搜索" disabled></div>
+    <button class="btn-login" onclick="logout()">退出</button>
+  </div>
+</header>
+
+<div class="page">
+  <div class="topbar">
+    <h2 style="margin:0">创作者后台</h2>
+    <div class="who">你好，<b id="who">…</b></div>
+  </div>
+  <p class="sub">提交你的 AI 小样，审核通过后即在首页对外展示。提交即进入「审核中」。</p>
+
+  <div class="panel-box">
+    <h3 id="formTitle" style="margin-bottom:14px">➕ 提交新小样</h3>
+    <form id="sampleForm">
+      <input type="hidden" id="editId">
+      <div class="form-grid">
+        <div><label>标题 *</label><input type="text" id="f_title" required></div>
+        <div><label>外链地址 *</label><input type="url" id="f_url" required placeholder="https://..."></div>
+        <div class="full"><label>一句话亮点</label><textarea id="f_summary" rows="2" placeholder="这个小样解决什么、怎么玩"></textarea></div>
+        <div><label>场景</label><select id="f_scenario">
+          <option>教育考试</option><option>知识答题</option><option>休闲小游戏</option><option>工具后台</option><option>其他</option>
+        </select></div>
+        <div><label>技术</label><select id="f_tech">
+          <option>AI生成</option><option>规则引擎</option><option>纯前端题库</option><option>低代码(aiforce·飞书)</option><option>自部署代码</option>
+        </select></div>
+        <div><label>AI 属性</label><select id="f_aiAttr">
+          <option>传统互动Demo</option><option>AI辅助生成</option><option>AI原生</option>
+        </select></div>
+        <div><label>体验方式</label><select id="f_exp">
+          <option value="link">外链跳转</option><option value="iframe">内嵌 iframe</option><option value="form">轻量表单</option>
+        </select></div>
+        <div><label>封面图标(emoji)</label><input type="text" id="f_icon" value="🧩" maxlength="4"></div>
+        <div><label>封面颜色</label><input type="color" id="f_color" value="#2563EB"></div>
+        <div class="full chk"><label style="margin:0"><input type="checkbox" id="f_cold"> 该站点为免费托管、首开需冷启动（显示唤醒提示）</label></div>
+      </div>
+      <button type="submit" class="submit-btn" id="submitBtn">提交审核</button>
+      <button type="button" class="submit-btn" id="cancelEdit" style="display:none;background:#6B7280;margin-left:10px">取消编辑</button>
+    </form>
+  </div>
+
+  <h3 style="margin:6px 0 12px">📦 我的小样</h3>
+  <div id="mine"><div style="color:#9CA3AF">加载中…</div></div>
+</div>
+
+<script>
+let me = null;
+async function init(){
+  const r = await fetch('/api/auth/me');
+  if(r.status!==200){ location.href='/login.html'; return; }
+  me = await r.json();
+  document.getElementById('who').textContent = me.displayName + (me.role==='admin'?'（管理员）':'');
+  loadMine();
+}
+async function loadMine(){
+  const r = await fetch('/api/studio/mine');
+  const d = await r.json();
+  const box = document.getElementById('mine');
+  if(!d.items.length){ box.innerHTML='<div style="color:#9CA3AF">还没有提交过，使用上方表单提交第一个小样吧。</div>'; return; }
+  box.innerHTML = d.items.map(s=>`
+    <div class="mine-item">
+      <div class="ic">${s.icon}</div>
+      <div class="info"><div class="t">${s.title}</div>
+        <div class="m">${s.scenario} · ${s.tech} · 体验 ${s.tryCount} · 评分 ${s.ratingCount}</div></div>
+      <span class="status ${s.status}">${s.status}</span>
+      <button class="btn-sm edit" onclick="editSample('${s.id}')">编辑</button>
+      <button class="btn-sm del" onclick="delSample('${s.id}')">删除</button>
+    </div>`).join('');
+}
+function editSample(id){
+  fetch('/api/samples/'+id).then(r=>r.json()).then(d=>{
+    const s=d.sample;
+    document.getElementById('editId').value=s.id;
+    document.getElementById('f_title').value=s.title;
+    document.getElementById('f_url').value=s.externalUrl;
+    document.getElementById('f_summary').value=s.summary;
+    document.getElementById('f_scenario').value=s.scenario;
+    document.getElementById('f_tech').value=s.tech;
+    document.getElementById('f_aiAttr').value=s.aiAttr;
+    document.getElementById('f_exp').value=s.experienceType;
+    document.getElementById('f_icon').value=s.icon;
+    document.getElementById('f_color').value=s.coverColor;
+    document.getElementById('f_cold').checked=s.coldStart;
+    document.getElementById('formTitle').textContent='✏️ 编辑小样';
+    document.getElementById('submitBtn').textContent='保存修改';
+    document.getElementById('cancelEdit').style.display='inline-block';
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+}
+function cancelEdit(){ resetForm(); }
+document.getElementById('cancelEdit').onclick=cancelEdit;
+function resetForm(){
+  document.getElementById('editId').value='';
+  document.getElementById('sampleForm').reset();
+  document.getElementById('f_icon').value='🧩';
+  document.getElementById('f_color').value='#2563EB';
+  document.getElementById('formTitle').textContent='➕ 提交新小样';
+  document.getElementById('submitBtn').textContent='提交审核';
+  document.getElementById('cancelEdit').style.display='none';
+}
+document.getElementById('sampleForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const id=document.getElementById('editId').value;
+  const payload={
+    title:document.getElementById('f_title').value.trim(),
+    externalUrl:document.getElementById('f_url').value.trim(),
+    summary:document.getElementById('f_summary').value.trim(),
+    scenario:document.getElementById('f_scenario').value,
+    tech:document.getElementById('f_tech').value,
+    aiAttr:document.getElementById('f_aiAttr').value,
+    experienceType:document.getElementById('f_exp').value,
+    icon:document.getElementById('f_icon').value||'🧩',
+    coverColor:document.getElementById('f_color').value,
+    coldStart:document.getElementById('f_cold').checked
+  };
+  if(!payload.title||!payload.externalUrl){ alert('标题与外链必填'); return; }
+  let r;
+  if(id){ r=await fetch('/api/samples/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); }
+  else { r=await fetch('/api/samples',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); }
+  const d=await r.json();
+  if(!r.ok){ alert(d.error||'失败'); return; }
+  resetForm();
+  loadMine();
+  alert(id?'已保存':'已提交，等待管理员审核');
+});
+async function delSample(id){
+  if(!confirm('确认删除该小样？')) return;
+  const r=await fetch('/api/samples/'+id,{method:'DELETE'});
+  if(r.ok) loadMine(); else alert('删除失败');
+}
+async function logout(){ await fetch('/api/auth/logout',{method:'POST'}); location.href='/'; }
+init();
+</script>
+</body>
+</html>

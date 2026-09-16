@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>审核台 · AI 小样集市</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo"><span class="dot"></span>AI 小样集市</div>
+    <nav><a href="/">首页</a><a href="/dashboard.html">数据看板</a><a href="/studio.html">创作者</a></nav>
+    <div class="search"><input placeholder="搜索" disabled></div>
+    <button class="btn-login" onclick="logout()">退出</button>
+  </div>
+</header>
+
+<div class="page" id="app">
+  <div class="topbar"><h2 style="margin:0">审核台</h2><div class="who">管理员：<b id="who">…</b></div></div>
+  <p class="sub">审核创作者提交的小样，控制上下线。新提交默认「审核中」。</p>
+
+  <div class="filter-row2">
+    <span class="pill active" data-s="">全部</span>
+    <span class="pill" data-s="审核中">审核中</span>
+    <span class="pill" data-s="已上线">已上线</span>
+    <span class="pill" data-s="已下线">已下线</span>
+    <span class="pill" data-s="草稿">草稿</span>
+  </div>
+  <div id="list"><div style="color:#9CA3AF">加载中…</div></div>
+</div>
+
+<script>
+let me=null, curStatus='';
+async function init(){
+  const r=await fetch('/api/auth/me');
+  if(r.status!==200){ location.href='/login.html'; return; }
+  me=await r.json();
+  if(me.role!=='admin'){ document.getElementById('app').innerHTML='<div class="noauth"><h2>无权限访问</h2><p>审核台仅限管理员。你的角色：'+(me.role==='creator'?'创作者':'未知')+'</p><p><a href="/studio.html" style="color:#2563EB">前往创作者后台 →</a></p></div>'; return; }
+  document.getElementById('who').textContent=me.displayName;
+  bindFilter();
+  load();
+}
+function bindFilter(){
+  document.querySelectorAll('.filter-row2 .pill').forEach(p=>{
+    p.onclick=()=>{ document.querySelectorAll('.filter-row2 .pill').forEach(x=>x.classList.remove('active')); p.classList.add('active'); curStatus=p.dataset.s; load(); };
+  });
+}
+async function load(){
+  const r=await fetch('/api/review'+(curStatus?'?status='+encodeURIComponent(curStatus):''));
+  const d=await r.json();
+  const box=document.getElementById('list');
+  if(!d.items.length){ box.innerHTML='<div style="color:#9CA3AF">暂无小样</div>'; return; }
+  box.innerHTML=d.items.map(s=>`
+    <div class="rev-item">
+      <div class="ic">${s.icon}</div>
+      <div class="info"><div class="t">${s.title} <span style="color:#9CA3AF;font-weight:400;font-size:12px">by ${s.creator}</span></div>
+        <div class="m">${s.scenario} · ${s.tech} · ${s.aiAttr} · 体验 ${s.tryCount} · 评分 ${s.ratingCount}</div></div>
+      <span class="status ${s.status}">${s.status}</span>
+      ${s.status!=='已上线'?`<button class="btn-sm ok" onclick="setStatus('${s.id}','已上线')">通过</button>`:''}
+      ${s.status!=='已下线'?`<button class="btn-sm off" onclick="setStatus('${s.id}','已下线')">下线</button>`:''}
+      ${s.status!=='审核中'?`<button class="btn-sm back" onclick="setStatus('${s.id}','审核中')">退回</button>`:''}
+    </div>`).join('');
+}
+async function setStatus(id,status){
+  const r=await fetch('/api/samples/'+id+'/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+  const d=await r.json();
+  if(!r.ok){ alert(d.error||'失败'); return; }
+  load();
+}
+async function logout(){ await fetch('/api/auth/logout',{method:'POST'}); location.href='/'; }
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录 · AI 小样集市</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo"><span class="dot"></span>AI 小样集市</div>
+    <nav><a href="/">首页</a><a href="/dashboard.html">数据看板</a></nav>
+    <div class="search"><input placeholder="搜索" disabled></div>
+    <button class="btn-login" onclick="location.href='/'">返回</button>
+  </div>
+</header>
+
+<div class="auth-wrap">
+  <h2 id="title">登录</h2>
+  <div class="hint" id="hint">使用账号进入创作者后台或审核台</div>
+  <form id="form">
+    <label>用户名</label>
+    <input type="text" id="username" autocomplete="username" required>
+    <label>密码</label>
+    <input type="password" id="password" autocomplete="current-password" required>
+    <label id="nameLabel" style="display:none">显示名称（创作者对外署名）</label>
+    <input type="text" id="displayName" style="display:none" placeholder="如：张三">
+    <div class="err" id="err"></div>
+    <button type="submit" id="submitBtn">登录</button>
+  </form>
+  <div class="toggle" id="toggle"></div>
+</div>
+
+<script>
+let mode = 'login';
+const toggle = document.getElementById('toggle');
+function render(){
+  if(mode==='login'){
+    document.getElementById('title').textContent='登录';
+    document.getElementById('hint').textContent='使用账号进入创作者后台或审核台';
+    document.getElementById('submitBtn').textContent='登录';
+    document.getElementById('nameLabel').style.display='none';
+    document.getElementById('displayName').style.display='none';
+    toggle.innerHTML='还没有账号？<a id="sw">注册成为创作者</a>';
+  } else {
+    document.getElementById('title').textContent='注册创作者';
+    document.getElementById('hint').textContent='注册后即可提交自己的小样，经审核后上线';
+    document.getElementById('submitBtn').textContent='注册';
+    document.getElementById('nameLabel').style.display='block';
+    document.getElementById('displayName').style.display='block';
+    toggle.innerHTML='已有账号？<a id="sw">去登录</a>';
+  }
+  document.getElementById('sw').onclick=()=>{ mode=mode==='login'?'register':'login'; render(); };
+}
+render();
+
+document.getElementById('form').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const err = document.getElementById('err'); err.textContent='';
+  const username=document.getElementById('username').value.trim();
+  const password=document.getElementById('password').value;
+  const displayName=document.getElementById('displayName').value.trim();
+  if(!username||!password){ err.textContent='请填写用户名和密码'; return; }
+  const url = mode==='login'?'/api/auth/login':'/api/auth/register';
+  const body = mode==='login'?{username,password}:{username,password,displayName};
+  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d = await r.json();
+  if(!r.ok){ err.textContent=d.error||'失败'; return; }
+  // 登录成功后按角色跳转
+  if(mode==='login'){
+    location.href = d.role==='admin'?'/review.html':'/studio.html';
+  } else {
+    err.style.color='#10B981'; err.textContent='注册成功，请登录';
+    mode='login'; render();
+  }
+});
+</script>
+</body>
+</html>

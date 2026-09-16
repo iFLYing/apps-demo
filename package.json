@@ -1,0 +1,13 @@
+{
+  "name": "ai-demos-hub",
+  "version": "1.0.0",
+  "description": "AI 小样集市 · 资源整合与在线体验站",
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-sqlite server.mjs",
+    "dev": "node --experimental-sqlite server.mjs"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}

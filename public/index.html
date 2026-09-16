@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 小样集市 · 看得到，更玩得到</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo"><span class="dot"></span>AI 小样集市</div>
+    <nav>
+      <a href="/">首页</a>
+      <a href="/#browse">分类</a>
+      <a href="/studio.html">创作者</a>
+      <a href="/review.html">审核台</a>
+    </nav>
+    <div class="search"><input id="search" placeholder="搜索小样 / 关键词"></div>
+    <button class="btn-login" onclick="location.href='/login.html'">登录</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <h1>看得到，更玩得到</h1>
+    <p>AI 辅助制作的互动小样集市 · 9+ 在线体验入口，玩完即反馈</p>
+    <button class="cta" onclick="document.getElementById('browse').scrollIntoView({behavior:'smooth'})">立即体验</button>
+    <div class="sub">含 <span class="badge-ai">AI 原生</span><span class="badge-ai">AI 辅助生成</span><span class="badge-ai">传统互动 Demo</span> 三类，坦诚标注，示范「AI 快速造小样」</div>
+  </div>
+</section>
+
+<section class="filters" id="browse">
+  <div class="filter-row">
+    <span class="label">场景</span>
+    <span class="pill active" data-f="scenario" data-v="">全部</span>
+    <span class="pill" data-f="scenario" data-v="教育考试">教育考试</span>
+    <span class="pill" data-f="scenario" data-v="知识答题">知识答题</span>
+    <span class="pill" data-f="scenario" data-v="休闲小游戏">休闲小游戏</span>
+    <span class="pill" data-f="scenario" data-v="工具后台">工具后台</span>
+  </div>
+  <div class="filter-row">
+    <span class="label">AI 属性</span>
+    <span class="pill active" data-f="ai_attr" data-v="">全部</span>
+    <span class="pill" data-f="ai_attr" data-v="AI原生">AI 原生</span>
+    <span class="pill" data-f="ai_attr" data-v="AI辅助生成">AI 辅助生成</span>
+    <span class="pill" data-f="ai_attr" data-v="传统互动Demo">传统互动 Demo</span>
+  </div>
+  <div class="filter-row">
+    <span class="label">技术</span>
+    <select id="tech">
+      <option value="">全部技术</option>
+      <option>AI生成</option><option>规则引擎</option><option>纯前端题库</option>
+      <option>低代码(aiforce·飞书)</option><option>自部署代码</option>
+    </select>
+    <div class="sort-wrap">
+      <span class="label">排序</span>
+      <select id="sort">
+        <option value="hot">最热体验</option>
+        <option value="new">最新上线</option>
+        <option value="rate">评分最高</option>
+      </select>
+    </div>
+  </div>
+  <div class="count-tip" id="countTip">正在加载小样…</div>
+</section>
+
+<div class="grid" id="grid"></div>
+
+<footer id="about">
+  <a href="/">关于</a> · <a href="/dashboard.html">提交小样</a> · <a href="#">合作联系</a> · <a href="#">反馈</a><br>
+  AI 小样集市 Demo · 聚合 aiforce / 飞书 / onrender / netlify 的互动小样
+</footer>
+
+<div class="modal-mask" id="modal">
+  <div class="modal">
+    <div class="spinner" id="modalSpin"></div>
+    <h3 id="modalTitle">正在唤醒服务</h3>
+    <p id="modalText">免费托管实例首次访问需十几秒启动，请稍候…</p>
+    <button class="go" id="modalGo" style="display:none">前往体验 →</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>
