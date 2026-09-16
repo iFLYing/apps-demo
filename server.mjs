@@ -179,6 +179,11 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // 健康检查（供 Render 健康检查 / 探活使用）
+  if (pathname === '/api/health' && method === 'GET') {
+    return sendJSON(res, 200, { ok: true, ts: Date.now() });
+  }
+
   // 受保护页面（无会话跳登录）
   if (pathname === '/studio.html' || pathname === '/review.html') {
     if (!getSessionUser(req)) { res.writeHead(302, { 'Location':'/login.html' }); return res.end(); }
