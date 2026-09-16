@@ -10,11 +10,12 @@ services:
     branch: main
     buildCommand: "npm install"
     startCommand: "node --experimental-sqlite server.mjs"
-    nodeVersion: "22"
     healthCheckPath: "/api/health"
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION     # Render 不支持 nodeVersion 字段，Node 版本用该环境变量指定
+        value: "22"
       # PORT 由 Render 自动注入，无需手动设置
       # 可选：用环境变量覆盖默认管理员密码（强烈建议生产环境设置）
       - key: ADMIN_PASSWORD
