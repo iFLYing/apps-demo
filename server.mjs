@@ -166,15 +166,33 @@ async function serveStatic(req, res, pathname) {
   let filePath = join(PUBLIC_DIR, safe === '/' ? '/index.html' : safe);
   try { const st = await stat(filePath); if (st.isDirectory()) filePath = join(filePath, 'index.html'); }
   catch { filePath = join(PUBLIC_DIR, 'index.html'); }
-  try { const buf = await readFile(filePath); res.writeHead(200, { 'Content-Type': MIME[extname(filePath)] || 'application/octet-stream' }); res.end(buf); }
-  catch { res.writeHead(404, { 'Content-Type':'text/plain; charset=utf-8' }); res.end('404 Not Found'); }
+  try {
+    const buf = await readFile(filePath);
+    const st = await stat(filePath);
+    const ext = extname(filePath);
+    // ETag 由「内容长度 + 修改时间」生成，文件一变即失效
+    const etag = `W/"${buf.length.toString(36)}-${Math.floor(Number(st.mtimeMs)).toString(36)}"`;
+    const headers = {
+      'Content-Type': MIME[ext] || 'application/octet-stream',
+      // no-cache：允许缓存，但每次必须回源校验，避免改版后浏览器仍显示旧页面
+      'Cache-Control': 'no-cache, must-revalidate',
+      'ETag': etag,
+      'Last-Modified': st.mtime.toUTCString(),
+    };
+    if (req.headers['if-none-match'] === etag) { res.writeHead(304, headers); return res.end(); }
+    res.writeHead(200, headers);
+    res.end(buf);
+  }
+  catch { res.writeHead(404, { 'Content-Type':'text/plain; charset=utf-8', 'Cache-Control':'no-cache' }); res.end('404 Not Found'); }
 }
 
 // ---------- 服务 ----------
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const { pathname } = url;
-  const method = req.method;
+  // HEAD 复用 GET 的路由逻辑，但不返回 body（兼容探活/监控类请求）
+  if (req.method === 'HEAD') { const _end = res.end.bind(res); res.end = () => _end(); }
+  const method = req.method === 'HEAD' ? 'GET' : req.method;
 
   // SSE
   if (pathname === '/api/stream') {
